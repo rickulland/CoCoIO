@@ -1,0 +1,11 @@
+PROCEDURE SetMouse
+TYPE  registers=cc,a,b,dp:BYTE; x,y,u:INTEGER
+DIM regs:registers
+DIM callcode:BYTE
+regs.a:=0
+regs.b:=$94
+regs.x:=$0101
+regs.y:=$FFFF
+callcode:=$8E
+RUN syscall(callcode,regs)
+END

@@ -1,0 +1,52 @@
+PROCEDURE getBookmark
+     TYPE bookmarks=name,page,title:STRING[80]
+     DIM path:BYTE
+     DIM int1,int2,doloc,readloc,reclen:INTEGER
+     PARAM bookmark:bookmarks
+     reclen:=240
+
+     ON ERROR GOTO 1000
+     RUN gfx2("owset",1,5,5,70,12,2,4)
+     RUN gfx2("curon") \RUN gfx2("gcset",0,0)
+
+     LOOP
+10     OPEN #path,"/dd/SYS/bookmark.www":READ
+       FOR int1=0 TO 4
+         FOR int2=1 TO 10
+           readloc:=int1*10+int2-1
+           SEEK #path,readloc*reclen
+           GET #path,bookmark
+           PRINT readloc+1;" ";bookmark.title 
+         NEXT int2
+
+20     INPUT "Number, 0 for next page, 99 to exit: ", doloc
+       IF doloc>50 THEN
+         bookmark.name:=""
+         bookmark.page:=""
+         bookmark.title:=""
+         GOTO 30
+       ENDIF
+       IF doloc<>0 THEN 
+          SEEK #path,(doloc-1)*reclen
+          GET #path,bookmark
+          GOTO 30
+       ENDIF
+       NEXT int1
+     ENDLOOP
+
+30   CLOSE #path
+     RUN gfx2("curoff")
+     RUN gfx2("owend")
+     END
+
+
+1000 ON ERROR
+     CREATE #path,"/dd/SYS/bookmark.www":WRITE
+     bookmark.name=""
+     bookmark.page=""
+     bookmark.title=""
+     FOR int1 = 1 TO 50
+       PUT #path,bookmark
+     NEXT int1
+     CLOSE #path
+     GOTO 10

@@ -1,0 +1,455 @@
+PROCEDURE www
+     (* Worst Web Wrangler V22 7/22/21 
+     (* Socket 0 only using 2k size TX & RX buffer
+     (* Requires 'wwwutils.b09'
+     (*      getdns, initeth, gotoHost
+     (*      getMouse,setMouse,getBookmark,putBookmark
+     TYPE registers=cc,a,b,dp:BYTE;x,y,u:INTEGER
+     TYPE rodent=Vld,Act,ToTm:BYTE; X1:INTEGER; TTT0:BYTE; TSSt:INTEGER; CBSA,CBSB,CCtA,CCtB,TTSA,TTSB,TLSA,TLSB:BYTE; X2,BDX,BDY:INTEGER; Stat,Res:BYTE; AcX,AcY,WRX,WRY: INTEGER
+     TYPE bookmarks=name,page,title:STRING[80]
+     DIM regs:registers
+     DIM mouse:rodent
+     DIM bookmark:bookmarks
+
+     DIM debug,header,intag,inlink,intitle,inundl:BOOLEAN
+     DIM gettitle,getlink:BOOLEAN
+     DIM ccode,hostaddr(4):INTEGER
+     DIM int1,int2,int3,int4:INTEGER
+     DIM tryct,linkct,segment,segstart:INTEGER
+     DIM linelen,lines,lxstart(10,2),lxend(10,2),lypos(10,2):INTEGER
+     DIM raddr,rbase,rend,rmask,rsize,rptr:INTEGER
+     DIM instr,str:STRING[32]
+     DIM hostname,hostpage,hosttitle:STRING[80]
+     DIM linktx,tagtx,linein,lineout,workstr,urlstr(10):STRING[255]
+     DIM crlf:STRING[2] \crlf=CHR$(13)+CHR$(10)
+
+     debug:=FALSE
+     lines:=0 \tryct:=1 \linkct:=0 \segstart:=0
+     linktx:=""
+     FOR int1=1 TO 10
+       urlstr(int1):=""
+     NEXT int1
+     header:=TRUE \intag:=FALSE \inlink:=FALSE \getlink:=FALSE
+     inundl:=FALSE
+     rbase:=$6000 \rmask:=$07FF \rend:=rbase+rmask
+
+     (* _____ start WizNet, get initial page 
+10
+     RUN initeth
+     IF debug=TRUE THEN \RUN stateth \ENDIF
+     RUN getBookmark(bookmark)
+     IF bookmark.name="" THEN
+       bookmark.name="rickslaptop.org"
+       bookmark.page="/coco.html"
+       bookmark.title="coco test page"
+     ENDIF
+
+100  (* wrong way to restart? should prolly go away  FIXME
+     RUN gotoHost(bookmark)
+
+200
+     (* ___________________________________________________  data read
+     IF debug=TRUE THEN 
+       PRINT   "Waiting for data"; 
+     ENDIF 
+     LOOP 
+210
+       (* FIXME _____ IRQ avoidance until 
+       REPEAT 
+         (* get Sn_RX_RSR recv size
+         POKE $FF69,$04 \POKE $FF6A,$26
+         rsize:=PEEK($FF6B)*256+PEEK($FF6B)
+         IF debug=TRUE THEN  \PRINT ".";  \ ENDIF 
+       UNTIL rsize<>0
+       segment:=rsize
+       GOSUB 1100
+215    
+       IF raddr+rsize<=rbase+rmask THEN 220
+       (* _____ first of possibly two segment 
+       linelen:=0 \linein:=""
+       IF debug=TRUE THEN  \ GOSUB 1500
+       ELSE  \ GOSUB 1200
+       ENDIF 
+       segment:=rsize-segment \segstart:=1
+       (* _____ single or final segment      
+       GOSUB 1100
+220
+       (* _____ last or only segment
+       linelen:=LEN(linein)
+       IF debug=TRUE THEN  \ GOSUB 1500
+       ELSE  \ GOSUB 1200
+       ENDIF 
+225
+       (* _____ end of a frame.    set Sn_RX_RD to last addr read
+       POKE $FF69,$04 \POKE $FF6A,$28
+       rsize:=rsize+1
+       int1:=INT(rsize/256) \int2:=rsize-256*int1
+       POKE $FF6B,int1 \POKE $FF6B,int2
+       POKE $FF69,$04 \POKE $FF6A,$01 \POKE $FF6B,$40
+     ENDLOOP 
+     
+1100
+     (* ________________________________ get SN_RX_RD, set rptr,raddr
+     POKE $FF69,$04 \POKE $FF6A,$28
+     rptr:=PEEK($FF6B)*256+PEEK($FF6B)
+     int1:=INT(rptr/256) \int2:=rptr-256*int1
+     int3:=INT(rmask/256) \int4:=rmask-256*int3
+     int1:=LAND(int1,int3) \int2:=LAND(int2,int4)
+     raddr:=int1*256+int2+rbase
+     RETURN 
+
+1200
+     (* html parserette _____________________________ html parserette
+     int1:=INT(raddr/256) \int2:=raddr-256*int1
+     POKE $FF69,int1 \POKE $FF6A,int2
+     (* _____ eat header, check for error status from server
+     IF header=TRUE THEN 
+       FOR int1=1 TO segment
+         LOOP 
+           ccode:=PEEK($FF6B)
+         EXITIF ccode>31 AND ccode<128 THEN 
+         ENDEXIT 
+         ENDLOOP 
+         IF ccode=60 THEN 
+           header:=FALSE \intag:=TRUE
+           tagtx:="<"
+           segstart:=int1 \linelen:=0
+           GOTO 1210
+         ENDIF 
+         (* 4 in 10th position is a 4xx error code
+         IF int1=10 THEN 
+           IF ccode=52 THEN 
+             IF tryct<6 THEN 
+               tryct:=tryct+1
+               GOTO 100
+             ENDIF 
+             LOOP 
+               PRINT   "Server error. <r>etry OR <e>nd "; 
+               instr:=""
+               (* WHILE instr="" DO 
+               (*  RUN INKEY(instr)
+               (* ENDWHILE 
+               INPUT   instr
+               IF instr="r" THEN 
+                 segstart:=int1
+                 GOTO 100
+               ENDIF 
+               IF instr="e" THEN 5000
+             ENDLOOP 
+           ENDIF 
+         ENDIF 
+       NEXT int1
+     ENDIF 
+     lineout:=""
+1210 
+     (* _____ get character loop  
+     FOR int3=segstart TO segment
+       LOOP 
+         ccode:=PEEK($FF6B)
+       EXITIF ccode>31 AND ccode<128 THEN 
+       ENDEXIT 
+       ENDLOOP 
+1212   
+       IF intag=TRUE THEN 
+         tagtx:=tagtx+CHR$(ccode)
+         IF getlink=TRUE THEN 
+           IF RIGHT$(linktx,5)="href=" OR RIGHT$(linktx,5)="HREF=" THEN 
+             inlink=TRUE
+             linktx:=""
+             GOTO 1290
+           ELSE 
+             IF ccode<>34 THEN 
+               linktx:=linktx+CHR$(ccode)
+             ENDIF 
+           ENDIF 
+         ENDIF 
+1214     
+         IF inlink=TRUE THEN 
+           IF ccode=34 THEN 
+             (* FIXME if last chars are 'download', jump to that *)
+             IF LEN(linktx)>1 THEN 
+               (* _____ add linktx to link menu
+               GOSUB 1400
+               getlink:=FALSE \intag:=FALSE \inlink:=FALSE
+               linktx:=""
+             ENDIF 
+           ENDIF 
+           GOTO 1290
+         ENDIF 
+1216     
+         IF intag=TRUE AND getlink=FALSE THEN 
+           FOR int4=1 TO 10
+             LOOP 
+               ccode:=PEEK($FF6B)
+             EXITIF ccode>31 AND ccode<128 THEN  \ ENDEXIT 
+             ENDLOOP 
+             tagtx:=tagtx+CHR$(ccode)
+             IF ccode=62 THEN 
+               (* _____dotag
+               GOSUB 1300
+               GOTO 1290
+             ENDIF 
+             IF tagtx="<a " THEN 
+               getlink:=TRUE
+               GOSUB 1310
+               GOTO 1290
+             ENDIF 
+           NEXT int4
+           (* _____not a tag, < is reg char
+           intag:=FALSE
+           linein:=linein+tagtx
+           linelen:=linelen+LEN(tagtx)
+           tagtx:=""
+           GOTO 1290
+         ENDIF 
+       ENDIF 
+1218   
+       (* _____ get regular char
+       IF ccode=60 THEN 
+         tagtx:="<"
+         intag:=TRUE
+       ELSE
+         linein:=linein+CHR$(ccode)    
+         linelen:=linelen+1
+       ENDIF
+       (* FIXME should this be 80?, also see 5 lines down *)
+       IF linelen>=79 THEN 
+         workstr:=lineout+linein 
+         FOR int4=linelen TO 1 STEP -1
+           str:=MID$(workstr,int4,1)
+           IF str=" " AND int4<78 THEN
+             PRINT LEFT$(workstr,int4)
+             lines:=lines+1 \lineout:=""
+             linein:=RIGHT$(workstr,LEN(workstr)-int4)
+             linelen:=LEN(linein)
+             IF inundl=TRUE THEN
+               GOSUB 1310
+               RUN gfx2("UNDLNOFF") \ inundl:=FALSE
+             ENDIF
+             GOTO 1290 
+           ENDIF 
+         NEXT int4  
+       ENDIF 
+
+       IF lines<23 THEN 1290
+       (* end of page menu _________________________ end of page menu 
+       INPUT "     <B>ookmark   <G>oto page   <Enter>next", instr
+       IF instr="b" OR instr="B" THEN
+         RUN putBookmark(bookmark)
+         GOTO 1290
+       ENDIF
+       IF instr="g" OR instr ="G"THEN
+         RUN getBookmark(bookmark)
+         IF bookmark.name="" THEN
+           RUN gotoHost(bookmark)
+           GOTO 200
+         ENDIF
+       ENDIF
+       RUN gfx2("CLEAR") \lines:=0
+       GOTO 1290
+       (* *******************************************************
+       LOOP
+         RUN getmouse(mouse)
+         RUN gfx2("PUTGC",mouse.AcX,mouse.AcY)
+       EXITIF mouse.CBSA<>0 THEN 
+         lines:=0
+         RUN gfx2("CLEAR") 
+       ENDEXIT
+       ENDLOOP
+       FOR int1=1 TO 10
+         FOR int2=1 TO 2
+           IF mouse.BDX>lxstart(int1,int2) AND mouse.BDX<lxend(int1,int2) AND mouse.BDY=lypos(int1,int2) THEN
+            (* do the link urlstr(int1)
+           ENDIF
+         NEXT int2
+       NEXT int1
+       IF mouse.BDX=80 AND mouse.BDY=24 THEN 5000
+       (* FIXME *********************************************
+1290   
+     NEXT int3
+     RETURN 
+     (* end parser main loop _________________________________ end parser main loop 
+1300 
+     (* ______________________________________________ dotag 
+     IF tagtx="<title>" OR tagtx="<TITLE>" THEN 
+       RUN gfx2("CLEAR")
+       lines:=1
+       RUN gfx2("REVON")
+       GOSUB 1310
+     ENDIF 
+     IF tagtx="</title>" OR tagtx="</TITLE>" THEN 
+       lines:=lines+1
+       GOSUB 1320
+       RUN gfx2("REVOFF")
+     ENDIF 
+     
+     IF tagtx="<p>" OR tagtx="<P>" THEN 
+       GOSUB 1320
+     ENDIF 
+     IF tagtx="</p>" OR tagtx="</P>" THEN 
+       GOSUB 1320
+     ENDIF 
+     
+     IF tagtx="<b>" OR tagtx="<B>" THEN 
+       GOSUB 1310
+       RUN gfx2("BOLDSW","ON")
+     ENDIF 
+     IF tagtx="</b>" OR tagtx="</B>" THEN 
+       GOSUB 1310
+       RUN gfx2("BOLDSW","OFF")
+     ENDIF 
+
+      IF tagtx="<i>" OR tagtx="<I>" THEN 
+       GOSUB 1310
+       RUN gfx2("BOLDSW","ON") \  RUN gfx2("PROPSW","ON")
+     ENDIF 
+     IF tagtx="</i>" OR tagtx="</I>" THEN 
+       GOSUB 1310
+       RUN gfx2("PROPSW","OFF") \ RUN gfx2("BOLDSW","OFF")
+     ENDIF  
+
+     IF LEFT$(tagtx,2)="<h" OR LEFT$(tagtx,2)="<H" THEN 
+       GOSUB 1310
+       IF RIGHT$(tagtx,2)="1>" THEN 
+         PRINT \RUN gfx2("REVON") \RUN gfx2("BOLDSW","ON")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="2>" THEN 
+         PRINT \RUN gfx2("REVON")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="3>" THEN 
+         PRINT \RUN gfx2("FONT",200,2)
+         RUN gfx2("REVON") \RUN gfx2("BOLDSW","ON")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="4>" THEN 
+         PRINT \RUN gfx2("FONT",200,2) \RUN gfx2("REVON")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="5>" THEN 
+         PRINT \RUN gfx2("FONT",200,2) \RUN gfx2("BOLDSW","ON")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="6>" THEN 
+         PRINT \RUN gfx2("FONT",200,2)
+       ENDIF 
+     ENDIF 
+
+     IF LEFT$(tagtx,3)="</h" OR LEFT$(tagtx,3)="</H" THEN 
+       GOSUB 1310
+       IF RIGHT$(tagtx,2)="1>" THEN 
+         RUN gfx2("REVOFF") \RUN gfx2("BOLDSW","OFF") 
+       ENDIF 
+       IF RIGHT$(tagtx,2)="2>" THEN 
+         RUN gfx2("REVOFF")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="3>" THEN 
+         RUN gfx2("FONT",200,1)
+         RUN gfx2("REVOFF") \RUN gfx2("BOLDSW","OFF")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="4>" THEN 
+         RUN gfx2("FONT",200,1) \RUN gfx2("REVOFF")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="5>" THEN 
+         RUN gfx2("FONT",200,1) \RUN gfx2("BOLDSW","OFF")
+       ENDIF 
+       IF RIGHT$(tagtx,2)="6>" THEN 
+         RUN gfx2("FONT",200,1)
+       ENDIF 
+     ENDIF 
+     
+     IF tagtx="</html>" OR tagtx="</HTML>" THEN 
+       LOOP 
+         PRINT   "<r>eload OR <e>nd "; 
+         instr:=""
+         (* FIXME **********************************************
+         (* WHILE instr="" DO 
+         (*  RUN INKEY(instr)
+         (* ENDWHILE 
+         INPUT instr
+         IF instr="r" THEN 100
+         IF instr="e" THEN 5000
+       ENDLOOP 
+     ENDIF 
+     (* eat the tag, recognized or not
+     tagtx:="" \intag:=FALSE
+     RETURN 
+     
+1310 
+     (* print and continue line
+     PRINT   linein; 
+     linein:=""
+     RETURN 
+     
+1320 
+     (* print and end line
+     PRINT   linein
+     linein:="" \lineout:=""
+     linelen:=0 \lines:=lines+1
+     RETURN 
+     
+1400 
+     (* ______________________________________________ link store
+     (* _____ drop earlest entry on overflow
+     IF LEN(urlstr(10))>0 THEN 
+       FOR int3=1 TO 9
+         urlstr(int3):=urlstr(int3+1)
+       NEXT int3
+       urlstr(10):="" 
+     ENDIF 
+
+     FOR int4=1 TO 10
+       IF LEN(urlstr(int4))=0 THEN 
+         urlstr(int4):=linktx
+         linein:="" \int1:=0
+         lxstart(int4,1):=linelen \lypos(int4,1):=lines
+         RUN gfx2("UNDLNON") \inundl:=TRUE
+         LOOP 
+           int1:=int1+1
+           ccode=PEEK($FF6B)
+           linein:=linein+CHR$(ccode)
+         EXITIF LEN(linein)>4 AND RIGHT$(linein,4)="</a>" THEN  
+         ENDEXIT 
+         ENDLOOP 
+         inlink:=FALSE \getlink:=FALSE \intag:=FALSE
+         (* FIXME increase? (see 7,8 line below, & prev FIXME) ********
+         IF linelen<78 THEN
+           linein:=MID$(linein,2,LEN(linein)-5)
+           linelen:=linelen+LEN(linein)
+           GOSUB 1310
+           RUN gfx2("UNDLNOFF") \inundl:=FALSE
+           lxend(int4,1):=linelen
+         ELSE
+           lxend(int4,1):=79         
+           lxstart(int4,2):=1 \lxend(int4,2):=linelen-78
+           lypos(int4,2):=lines+1
+           linktx:=""           
+         ENDIF
+         RETURN
+       ENDIF
+     NEXT int4
+     PRINT   "link table overflow"
+     STOP
+     
+1500 int1:=INT(raddr/256) \int2:=raddr-256*int1
+     (* ________________________________________ debug - dump data
+     POKE $FF69,int1 \POKE $FF6A,int2
+     FOR int3=1 TO segment
+       ccode:=PEEK($FF6B)
+       IF ccode>31 AND ccode<128 THEN 
+         PRINT   CHR$(ccode); 
+       ENDIF 
+       IF ccode=13 THEN \PRINT \ENDIF 
+     NEXT int3
+     RETURN 
+
+4000 (* FIXME delete after links working
+     (* debug - print link array
+     INPUT   instr
+     FOR int1 = 1 to 3
+       IF LEN(urlstr(int1)) > 0 THEN
+       PRINT  urlstr(int1)
+       PRINT  "  ";lxstart(int1,1);" ";lxend(int1,1); " ";lypos(int1,1)
+       PRINT  "  ";lxstart(int1,2);" ";lxend(int1,2); " ";lypos(int1,2)
+       ENDIF
+     NEXT int1
+     INPUT   instr
+
+5000 
+     END 

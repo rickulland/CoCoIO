@@ -1,0 +1,104 @@
+PROCEDURE initeth
+     (* initialize interface v0.1 6/23/21 
+     (* reads file  /SYS/interfaces, formatted as:
+     (* 
+     (* iface eth0 inet static
+     (* address 192.168.0.7
+     (* gateway 192.168.0.1
+     (* netmask 255.255.255.0
+     (* macaddr 5C:26:0A:01:02:03
+     (* phyaddr $FF6B
+     
+     DIM debug:BOOLEAN
+     DIM cnt,loc,int2,path:INTEGER
+     DIM address(4),gate(4),net(4),mac(6):BYTE
+     DIM instr:STRING[80]
+     debug:=FALSE
+     
+     OPEN #path,"/DD/SYS/interfaces":READ
+     WHILE EOF(#path)<>TRUE DO 
+       READ #path,instr
+       instr:=instr+"."
+       IF LEFT$(instr,8)="address " THEN 
+         instr:=RIGHT$(instr,LEN(instr)-8)
+         FOR cnt=1 TO 4
+           loc:=SUBSTR(".",instr)
+           address(cnt):=VAL(MID$(instr,1,loc-1))
+           instr:=RIGHT$(instr,LEN(instr)-loc)
+         NEXT cnt
+       ENDIF        
+       IF LEFT$(instr,8)="gateway " THEN 
+         instr:=RIGHT$(instr,LEN(instr)-8)
+         FOR cnt=1 TO 4
+           loc:=SUBSTR(".",instr)
+           gate(cnt):=VAL(MID$(instr,1,loc-1))
+           instr:=RIGHT$(instr,LEN(instr)-loc)
+         NEXT cnt
+       ENDIF        
+       IF LEFT$(instr,8)="netmask " THEN 
+         instr:=RIGHT$(instr,LEN(instr)-8)
+         FOR cnt=1 TO 4
+           loc:=SUBSTR(".",instr)
+           net(cnt):=VAL(MID$(instr,1,loc-1))
+           instr:=RIGHT$(instr,LEN(instr)-loc)
+         NEXT cnt
+       ENDIF 
+       IF LEFT$(instr,8)="macaddr " THEN 
+         instr:=RIGHT$(instr,LEN(instr)-8)
+         FOR cnt=1 TO 6
+           instr:="$"+instr
+           mac(cnt):=VAL(MID$(instr,1,3))
+           instr:=RIGHT$(instr,LEN(instr)-4)
+         NEXT cnt
+       ENDIF 
+       (*IF LEFT$(instr,8)="phyaddr " THEN 
+       (*   instr:=MID$(instr,LEN(instr)-8,4)
+       (*   IF instr="FF78" THEN 
+       (*     phyaddr:=$FF78
+       (*   ELSE
+       (*     phyaddr:=$FF68
+       (*   ENDIF
+        (*ENDIF
+     ENDWHILE 
+     CLOSE #path
+
+
+     (* ___________________________________________________ Set up Wizzy
+     (* reset Wiznet, set autoinc, indirect buss modes
+     POKE $FF6B,$80 \POKE $FF6B,$03
+     (* Start autoinc,set local gateway,subnet,MAC,IP
+     POKE $FF69,$00 \POKE $FF6A,$01
+     IF debug=TRUE THEN PRINT "----- Writing to Wiznet -----"
+     ENDIF
+     IF debug=TRUE THEN  \PRINT  \PRINT "gateway  ";  \ ENDIF 
+     FOR cnt=1 TO 4
+       IF debug=TRUE THEN  \PRINT gate(cnt);".";  \ ENDIF 
+       POKE $FF6B,gate(cnt)
+     NEXT cnt
+     IF debug=TRUE THEN  \PRINT  \PRINT "netmask  ";  \ ENDIF 
+     FOR cnt=1 TO 4
+       IF debug=TRUE THEN  \PRINT net(cnt);".";  \ ENDIF 
+       POKE $FF6B,net(cnt)
+     NEXT cnt
+     IF debug=TRUE THEN  \PRINT  \PRINT "macaddr  "; \ ENDIF 
+     FOR cnt=1 TO 6
+       IF debug=TRUE THEN  \PRINT USING "H2",mac(cnt);
+       PRINT ":";  \ ENDIF 
+       POKE $FF6B,mac(cnt)
+     NEXT cnt
+     IF debug=TRUE THEN  \PRINT  \PRINT "  my ip  ";  \ ENDIF 
+     FOR cnt=1 TO 4
+       IF debug=TRUE THEN  \PRINT address(cnt);".";  \ ENDIF 
+       POKE $FF6B,address(cnt)
+     NEXT cnt
+     IF debug=TRUE THEN PRINT \PRINT \ ENDIF
+
+     (* SOCKET - set TCP, loc port(32K+random), remote IP, port
+     POKE $FF69,$04 \POKE $FF6A,$00 \POKE $FF6B,$01
+     POKE $FF69,$04 \POKE $FF6A,$04
+     POKE $FF6B,$80 \POKE $FF6B,RND($FF)
+     POKE $FF69,$04 \POKE $FF6A,$0C
+     POKE $FF6B,192 \POKE $FF6B,168 \POKE $FF6B,0 \POKE $FF6B,124
+     POKE $FF6B,0 \POKE $FF6B,80 
+
+100  END 

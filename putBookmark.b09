@@ -1,0 +1,34 @@
+PROCEDURE putBookmark
+     TYPE bookmarks=name,page,title:STRING[80]
+     DIM path:BYTE
+     DIM int1,reclen:INTEGER
+     DIM testit:bookmarks     
+     PARAM bookmark:bookmarks
+     reclen:=240
+
+     ON ERROR GOTO 1000
+10   OPEN #path,"/dd/SYS/bookmark.www":UPDATE
+     FOR int1 = 1 TO 50
+         SEEK #path,(int1-1)*reclen
+         GET #path,testit
+         IF testit.name="" THEN
+           SEEK #path,(int1-1)*reclen
+           PUT #path,bookmark
+           GOTO 30
+         ENDIF
+     NEXT int1
+     PRINT "Not saved. Bookmark file full."  
+     INPUT instr
+30   CLOSE #path
+     END
+
+1000 ON ERROR
+     CREATE #path,"/dd/SYS/bookmark.www":WRITE
+     bookmark.name=""
+     bookmark.page=""
+     bookmark.title=""
+     FOR int1 = 1 TO 50
+       PUT #path,bookmark
+     NEXT int1
+     CLOSE #path
+     GOTO 10
