@@ -1,5 +1,5 @@
 PROCEDURE initeth
-     (* initialize interface v0.1 6/23/21 
+     (* www util - initialize interface 8/17/21 
      (* reads file  /SYS/interfaces, formatted as:
      (* 
      (* iface eth0 inet static
@@ -13,6 +13,7 @@ PROCEDURE initeth
      DIM cnt,loc,int2,path:INTEGER
      DIM address(4),gate(4),net(4),mac(6):BYTE
      DIM instr:STRING[80]
+     PARAM phyaddr:INTEGER
      debug:=FALSE
      
      OPEN #path,"/DD/SYS/interfaces":READ
@@ -51,54 +52,54 @@ PROCEDURE initeth
            instr:=RIGHT$(instr,LEN(instr)-4)
          NEXT cnt
        ENDIF 
-       (*IF LEFT$(instr,8)="phyaddr " THEN 
-       (*   instr:=MID$(instr,LEN(instr)-8,4)
-       (*   IF instr="FF78" THEN 
-       (*     phyaddr:=$FF78
-       (*   ELSE
-       (*     phyaddr:=$FF68
-       (*   ENDIF
-        (*ENDIF
+
+       IF LEFT$(instr,8)="phyaddr " THEN
+          IF SUBSTR("FF78",instr) > 0 THEN 
+            phyaddr:=$FF78
+          ELSE
+            phyaddr:=$FF68
+          ENDIF
+       ENDIF
      ENDWHILE 
      CLOSE #path
 
 
      (* ___________________________________________________ Set up Wizzy
      (* reset Wiznet, set autoinc, indirect buss modes
-     POKE $FF6B,$80 \POKE $FF6B,$03
+     POKE $FF6B,$80 \ POKE $FF6B,$03
      (* Start autoinc,set local gateway,subnet,MAC,IP
-     POKE $FF69,$00 \POKE $FF6A,$01
+     POKE $FF69,$00 \ POKE $FF6A,$01
      IF debug=TRUE THEN PRINT "----- Writing to Wiznet -----"
      ENDIF
-     IF debug=TRUE THEN  \PRINT  \PRINT "gateway  ";  \ ENDIF 
+     IF debug=TRUE THEN  \ PRINT  \ PRINT "gateway  ";  \ ENDIF 
      FOR cnt=1 TO 4
-       IF debug=TRUE THEN  \PRINT gate(cnt);".";  \ ENDIF 
+       IF debug=TRUE THEN  \ PRINT gate(cnt);".";  \ ENDIF 
        POKE $FF6B,gate(cnt)
      NEXT cnt
-     IF debug=TRUE THEN  \PRINT  \PRINT "netmask  ";  \ ENDIF 
+     IF debug=TRUE THEN  \ PRINT  \ PRINT "netmask  ";  \ ENDIF 
      FOR cnt=1 TO 4
-       IF debug=TRUE THEN  \PRINT net(cnt);".";  \ ENDIF 
+       IF debug=TRUE THEN  \ PRINT net(cnt);".";  \ ENDIF 
        POKE $FF6B,net(cnt)
      NEXT cnt
-     IF debug=TRUE THEN  \PRINT  \PRINT "macaddr  "; \ ENDIF 
+     IF debug=TRUE THEN  \ PRINT  \ PRINT "macaddr  "; \ ENDIF 
      FOR cnt=1 TO 6
-       IF debug=TRUE THEN  \PRINT USING "H2",mac(cnt);
+       IF debug=TRUE THEN  \ PRINT USING "H2",mac(cnt);
        PRINT ":";  \ ENDIF 
        POKE $FF6B,mac(cnt)
      NEXT cnt
-     IF debug=TRUE THEN  \PRINT  \PRINT "  my ip  ";  \ ENDIF 
+     IF debug=TRUE THEN  \ PRINT  \ PRINT "  my ip  ";  \ ENDIF 
      FOR cnt=1 TO 4
-       IF debug=TRUE THEN  \PRINT address(cnt);".";  \ ENDIF 
+       IF debug=TRUE THEN  \ PRINT address(cnt);".";  \ ENDIF 
        POKE $FF6B,address(cnt)
      NEXT cnt
-     IF debug=TRUE THEN PRINT \PRINT \ ENDIF
+     IF debug=TRUE THEN PRINT \ PRINT \ ENDIF
 
      (* SOCKET - set TCP, loc port(32K+random), remote IP, port
-     POKE $FF69,$04 \POKE $FF6A,$00 \POKE $FF6B,$01
-     POKE $FF69,$04 \POKE $FF6A,$04
-     POKE $FF6B,$80 \POKE $FF6B,RND($FF)
-     POKE $FF69,$04 \POKE $FF6A,$0C
-     POKE $FF6B,192 \POKE $FF6B,168 \POKE $FF6B,0 \POKE $FF6B,124
-     POKE $FF6B,0 \POKE $FF6B,80 
+     POKE $FF69,$04 \ POKE $FF6A,$00 \ POKE $FF6B,$01
+     POKE $FF69,$04 \ POKE $FF6A,$04
+     POKE $FF6B,$80 \ POKE $FF6B,RND($FF)
+     POKE $FF69,$04 \ POKE $FF6A,$0C
+     POKE $FF6B,192 \ POKE $FF6B,168 \ POKE $FF6B,0 \ POKE $FF6B,124
+     POKE $FF6B,0 \ POKE $FF6B,80 
 
 100  END 
