@@ -1,10 +1,16 @@
 PROCEDURE putBookmark
+     (* 8/9/21
      TYPE bookmarks=name,page,title:STRING[80]
      DIM path:BYTE
      DIM int1,reclen:INTEGER
+     DIM instr:STRING[1]
      DIM testit:bookmarks     
      PARAM bookmark:bookmarks
      reclen:=240
+
+     RUN gfx2("owset",1,5,5,70,6,2,4)
+     RUN gfx2("curon") \RUN gfx2("gcset",0,0)
+     PRINT
 
      ON ERROR GOTO 1000
 10   OPEN #path,"/dd/SYS/bookmark.www":UPDATE
@@ -14,12 +20,23 @@ PROCEDURE putBookmark
          IF testit.name="" THEN
            SEEK #path,(int1-1)*reclen
            PUT #path,bookmark
+           PRINT "Bookmark saved:"
+           PRINT bookmark.title       
+           PRINT bookmark.name
+           PRINT bookmark.page
            GOTO 30
          ENDIF
      NEXT int1
-     PRINT "Not saved. Bookmark file full."  
-     INPUT instr
-30   CLOSE #path
+     PRINT "Not saved. Bookmark file full."; 
+
+30   RUN gfx2("curxy",1,6) \PRINT "Enter to leave" 
+     instr:=""
+     WHILE instr="" DO
+       RUN INKEY(instr)
+     ENDWHILE
+     CLOSE #path
+     RUN gfx2("curoff")
+     RUN gfx2("owend")
      END
 
 1000 ON ERROR
