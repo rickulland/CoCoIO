@@ -19,3 +19,4 @@ you may also want to merge everything except www.b09 into one glob, the utilitie
 * Search for the string “ DB “ for any specific debug help 
 * less significant variable assignments are indented and use generic names 
   (int1, etc)
+* bufmath is not used, it illustrates the bare outline of how www manages the WizNet data buffer. 
