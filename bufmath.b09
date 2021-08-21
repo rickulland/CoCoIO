@@ -1,0 +1,59 @@
+PROCEDURE bufmath
+(* bare outline of buffer math 8/19/21 ricku
+(*
+DIM raddr,rbase,rend,rmask,roff,rsize,rptr,rmax,segment:INTEGER
+DIM int1,int2,int3,int4:INTEGER
+
+(* rbase   - base address of read buffer
+(* rmask   - buffer size mask
+(* rptr    - raw ptr from Wizzy. AND with mask to get roff
+(* roff    - read offset from start of buffer
+(* rend    - end of read buffer
+(* raddr   - absolute read address
+(* rsize   - total bytes to injest
+(* segment - bytes to injest (to EOB or after wraparound)
+
+
+(* At this point you have sent a request to the server 
+(* and are waiting for data 
+
+     (* ____________________________________________ start of read page
+     LOOP 
+       (* FIXME _____ POLLS say IRQs are better!
+       REPEAT 
+           POKE $FF69,$04 \ POKE $FF6A,$26 \ (* get Sn_RX_RSR recv size
+         rsize:=PEEK($FF6B)*256+PEEK($FF6B)
+       UNTIL rsize<>0
+       segment:=rsize \ rbase:=$6000
+         POKE $FF69,$04 \ POKE $FF6A,$1E \ (* Sn_RXBUF_SIZE
+         int1:=PEEK($FF6B)*256+PEEK($FF6B)
+       rmask:=1024*int1-1
+         POKE $FF69,$04 \ POKE $FF6A,$26 \ (* Sn_RX_RSR
+       rsize:=PEEK($FF6B)*256+PEEK($FF6B)
+         POKE $FF69,$04 \ POKE $FF6A,$28 \ (* Sn_RX_RD
+       rptr:=PEEK($FF6B)*256+PEEK($FF6B)
+         int1:=INT(rptr/256) \ int2:=rptr-256*int1
+         int3:=INT(rmask/256) \ int4:=rmask-256*int3
+         int1:=LAND(int1,int3) \ int2:=LAND(int2,int4)
+       roff:=int1*256+int2+rbase
+
+       (* _____________________________________________ parse the frame 
+       raddr:=rbase+roff
+       IF roff+rsize>rend THEN 
+         segment:=rmask+1-roff
+         (* GOSUB - process segment bytes of data
+         raddr:=rbase \ segment:=rsize-rend
+         (* GOSUB - process segment bytes of data 
+       ELSE 
+         segment:=rsize 
+         (* GOSUB - process segment bytes of data
+       ENDIF       
+       (* __________________ end of a frame. increase Sn_RX_RD by rsize
+         POKE $FF69,$04 \ POKE $FF6A,$28
+       rptr:=PEEK($FF6B)*256+PEEK($FF6B)+rsize
+         POKE $FF69,$04 \ POKE $FF6A,$28
+         int1:=INT(rptr/256) \ int2:=rptr-256*int1
+       POKE $FF6B,int1 \ POKE $FF6B,int2
+       
+       POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$40 \ (*Sn_CR to RECV
+     ENDLOOP 
