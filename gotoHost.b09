@@ -1,5 +1,5 @@
 PROCEDURE gotoHost
-(* 8/4/21
+(* 10/08/21
 TYPE bookmarks=server,page,title:STRING[80]
 DIM hostname,lineout(4):STRING[80]
 DIM crlf:STRING[2]
@@ -24,16 +24,27 @@ FOR fn1=1 TO 4
   POKE $FF6B,hostaddr(fn1)
 NEXT fn1
 POKE $FF6B,0 \ POKE $FF6B,80
-
+(* random local port * DB 8/26/21
+POKE $FF69,$04 \ POKE $FF6A,$04
+POKE $FF6B,$80 \ POKE $FF6B,RND($FF)
+  
 (* _____open socket, fn until status OK or fatal error
 POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$01
 POKE $FF69,$04 \ POKE $FF6A,$03 \int1:=PEEK($FF6B)
-IF int1<>$13 THEN 5000
+IF int1<>$13 THEN   \(* socket not open tcp mode
+  PRINT "FATAL: local socket didn't initialize. BREAK to exit"
+  INPUT int1
+  GOTO 5000
+ENDIF 
 REPEAT 
   POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$04
   POKE $FF69,$04 \ POKE $FF6A,$03 \int1:=PEEK($FF6B)
-  IF int1=0 THEN 5000
-UNTIL int1=$17
+  IF int1=0 THEN    \(* socket was closed
+    PRINT "ERROR: remote server closed connection. Reload page."
+    INPUT int1
+    GOTO 5000
+  ENDIF
+UNTIL int1=$17         \(* connected
 IF debug=TRUE THEN PRINT  \ PRINT "Socket open" \ ENDIF 
 lineout(1):="GET "+bookmark.page+" HTTP/1.1"
 lineout(2):="Host: "+bookmark.server
@@ -72,4 +83,3 @@ FOR fn1=1 TO 4
 NEXT fn1
 POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$20
 5000 END 
-
