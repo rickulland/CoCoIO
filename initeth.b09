@@ -1,5 +1,5 @@
 PROCEDURE initeth
-     (* www util - initialize interface 8/17/21 
+     (* www util - initialize interface 10/08/21 
      (* reads file  /SYS/interfaces, formatted as:
      (* 
      (* iface eth0 inet static
@@ -13,7 +13,7 @@ PROCEDURE initeth
      DIM cnt,loc,int2,path:INTEGER
      DIM address(4),gate(4),net(4),mac(6):BYTE
      DIM instr:STRING[80]
-     PARAM phyaddr:INTEGER
+     (* PARAM phyaddr:STRING[5]
      debug:=FALSE
      
      OPEN #path,"/DD/SYS/interfaces":READ
@@ -53,13 +53,13 @@ PROCEDURE initeth
          NEXT cnt
        ENDIF 
 
-       IF LEFT$(instr,8)="phyaddr " THEN
-          IF SUBSTR("FF78",instr) > 0 THEN 
-            phyaddr:=$FF78
-          ELSE
-            phyaddr:=$FF68
-          ENDIF
-       ENDIF
+       (* IF LEFT$(instr,8)="phyaddr " THEN
+       (*   IF SUBSTR("FF78",instr) > 0 THEN 
+       (*     phyaddr:=$FF78
+       (*   ELSE
+       (*     phyaddr:=$FF68
+       (*   ENDIF
+       (* ENDIF
      ENDWHILE 
      CLOSE #path
 
@@ -94,12 +94,8 @@ PROCEDURE initeth
      NEXT cnt
      IF debug=TRUE THEN PRINT \ PRINT \ ENDIF
 
-     (* SOCKET - set TCP, loc port(32K+random), remote IP, port
+     (* set TCP mode
      POKE $FF69,$04 \ POKE $FF6A,$00 \ POKE $FF6B,$01
-     POKE $FF69,$04 \ POKE $FF6A,$04
-     POKE $FF6B,$80 \ POKE $FF6B,RND($FF)
-     POKE $FF69,$04 \ POKE $FF6A,$0C
-     POKE $FF6B,192 \ POKE $FF6B,168 \ POKE $FF6B,0 \ POKE $FF6B,124
-     POKE $FF6B,0 \ POKE $FF6B,80 
-
+ 
 100  END 
+
