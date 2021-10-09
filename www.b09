@@ -1,5 +1,5 @@
 PROCEDURE www
-     (* Worst Web Wrangler 8/17/21 copyback 8/11/21
+     (* Worst Web Wrangler 10/08/21 copyback 10/08/21
      (* Socket 0 only using 2k size TX & RX buffer
      (* Requires 'wwwutils.b09' including:
      (* getdns, initeth, stateth, gotoHost
@@ -54,10 +54,8 @@ PROCEDURE www
        bookmark.page="/coco.html"
        bookmark.title="coco test page"
      ENDIF 
-     
 100  
      RUN gotoHost(bookmark)
-     
 200  
      (* ____________________________________________ start of read page
      IF debug=TRUE THEN 
@@ -116,13 +114,15 @@ PROCEDURE www
        POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$40 \(* set Sn_CR to RECV  
      ENDLOOP 
 
- 300  
-     POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$08 \(* set Sn_CR to DISC
+ 300 
+     (* send disconnect, verify
+     POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$08 
      LOOP
        POKE $FF69,$04 \ POKE $FF6A,$03 
-       int1:=PEEK($FF6B)
-     EXITIF int1=24 THEN
-     header:=TRUE
+       (* DB 1008 sometimes fails to 0? int1:=PEEK($FF6B)
+       int1=$18
+     EXITIF int1=$18 THEN
+      header:=TRUE
      ENDEXIT
      ENDLOOP
      RETURN
@@ -234,7 +234,7 @@ PROCEDURE www
        ENDIF 
        (* FIXME should this be 80?, also see fn4 five lines down FIXME*)
        IF linelen>=79 THEN 
-         workstr:=linein  (* FIXME just use linein
+         workstr:=linein  \(* FIXME just use linein
          FOR fn4=linelen TO 1 STEP -1
            str:=MID$(workstr,fn4,1)
            IF str=" " AND fn4<78 THEN 
@@ -285,6 +285,7 @@ PROCEDURE www
              IF instr="g" OR instr="G" THEN 
                (* _____ bookmark menu
                RUN getBookmark(bookmark)
+               if bookmark.page:="" THEN 1220
                (* TESTME **************************************
                GOSUB 300
                GOTO 100
@@ -328,7 +329,6 @@ PROCEDURE www
              IF xcur<29 THEN 
                (* _____ bookmark menu
                RUN getBookmark(bookmark)
-               (* TESTME **************************************
                GOSUB 300
                GOTO 100
              ELSE 
@@ -395,10 +395,13 @@ PROCEDURE www
      ENDIF 
      
      IF tagtx="<p>" OR tagtx="<P>" OR tagtx="</p>" OR tagtx="</P>" THEN
-      THEN 
        GOSUB 1320
      ENDIF 
-     
+
+     IF tagtx="<br>" OR tagtx="<BR>" THEN
+       GOSUB 1320
+     ENDIF 
+
      IF tagtx="<b>" OR tagtx="<B>" THEN 
        GOSUB 1310
        RUN gfx2("boldsw","ON")
@@ -515,7 +518,7 @@ PROCEDURE www
            RUN gfx2("undlnoff") \inundl:=FALSE
            lxend(fn4,1):=linelen
          ELSE 
-           lxend(rn4,1):=79
+           lxend(fn4,1):=79
            lxstart(fn4,2):=1 \lxend(fn4,2):=linelen-78
            lypos(fn4,2):=lines+1
            linktx:=""
@@ -559,7 +562,7 @@ PROCEDURE www
      RUN gfx2("owend")
      IF doloc<11 THEN 
 2030   (* see 1230
-       bookmark.page:=urlstr(doloc)
+       bookmark.page:="/"+urlstr(doloc)
        RUN gotoHost(bookmark)
        GOTO 200
      ENDIF 
