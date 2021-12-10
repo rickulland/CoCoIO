@@ -27,7 +27,7 @@ CoCoIO always uses auto-increment mode to access the Wiznet internal RAM. Just  
 
 <B>Common Registers</B>
 
-These control the local side network setup. Many can be left at default until you know they need changing. These are a must do setup for TCP/IP: 
+These control the local side network setup. Many can be left at default until you know they need changing. See pg 18 of the WizNet 5100s datasheet for a complete list. These are a must do setup for TCP/IP: 
 
 			    Start   Length
 	Mode Register (MR)	$0  1
@@ -37,14 +37,11 @@ These control the local side network setup. Many can be left at default until yo
 	My IP Address 		$F  4
 
 
-See pg 18 of the WizNet 5100s datasheet for a complete list.
-
-
 <B>Socket Registers and Connection Procedure</B>
 
 Socket registers control up to 4 ethernet connections. Socket 0 uses internal addresses $400-$4FF, with the other three starting at $500, $600, and $700. We’ll list socket 0 only as we segue into procedural mode. 
 	
-Mode Register ($400) – First, define the new socket.  This register’s lower four bits define the socket type:
+Mode Register ($400) – First, define the new socket.  This register’s lower four bits define the socket type, and the upper 3 bits optionally enable certain features:
 
 	  0  Closed
 	  1  TCP
@@ -52,9 +49,6 @@ Mode Register ($400) – First, define the new socket.  This register’s lower 
 	  3  IP Raw
 	  4  MAC Raw  (socket 0 only)
 	  5  PPPoE (Socket 0 only
-
-and the upper 3 bits optionally enable certain features:
-
 	 32  disable delayed ACK (TCP) or set IGMP1 (multicast)
  	 64  promiscuous mode (Socket 0, MAC raw mode only)
 	128  enable multicasting (UDP sockets only)
