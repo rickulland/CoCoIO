@@ -83,17 +83,12 @@ With the socket opened, it’s time to move some bytes. Thw WizNet has 16K of in
 
 The W5100 does not automatically manage buffer rollover. It's up to you to wrap around, and to reset the read pointer location to reflect the number of 'auto-inc' reads made from the dataport. So a receive loop would be:
 
-1. Use IRQ or poll the Received Size Register. When >0 ...
-
-2. Get the read or write pointer, AND to the buffer mask (buff size -1) then add to the buffer base address. This is the start location.
-
-3. Get the rx/tx data size, subtract this from end of buffer. This is sizeof first segment. Read that many bytes from the dataport.
-
-4. Reset the rx/tx pointer to the start of the buffer and read the remaining bytes from the dataport. 
-
-5. Set the read pointer one address past the last read address
-
-6. Send RECV ($40) to the socket command register
+	1. Use IRQ or poll the Received Size Register. When >0 ...
+	2. Get read or write pointer, AND with buffer mask <i>(buff size -1)</i> then add buffer base address. This is the start location.
+	3. Get rx/tx data size, subtract this from end of buffer. This is sizeof first segment. Read that many bytes from the dataport.
+	4. Reset the rx/tx pointer to the start of the buffer and read the remaining bytes from the dataport. 
+	5. Set the read pointer one address past the last read address
+	6. Send RECV ($40) to the socket command register
 
 
 
@@ -101,12 +96,9 @@ The W5100 does not automatically manage buffer rollover. It's up to you to wrap 
 
 <B>close the connection</B>
 
-
-
 Only two registers to manipulate, and the TCP/IP connection is closed. 
-
-Command Register ($401) – Set to $08 (DISCON)
-Status Register ($403) – loop until = $18 (SOCK_FIN_WAIT)
+	Command Register ($401) – Set to $08 (DISCON)
+	Status Register ($403) – loop until = $18 (SOCK_FIN_WAIT)
 
 
 
@@ -119,22 +111,20 @@ To illustrate all this, we have part of a web browser in Basic09. Get the code f
 
 The ‘worst web wrangler’ depends on two data files loosely based on their Linux equivalents. Edit these and config is done.
 
-/DD/SYS/hosts
-Hosts is the dns of last resort, a list of hostname and address pairs starting with the address of the local machine. We don’t have a dns utility yet, so follow that with additional lines of webservers & etc.  
+<b>/DD/SYS/hosts</b> - Hosts is the dns of last resort, a list of hostname and address pairs starting with the address of the local machine. We don’t have a dns utility yet, so follow that with additional lines of webservers & etc.  
 
-192.168.0.7  rickslaptop.org
-192.168.0.8  anotherhost.com
+	192.168.0.7  rickslaptop.org
+	192.168.0.8  anotherhost.com
 
 
-/DD/SYS/interfaces
-Interfaces describes the ethernet connection. We still don’t have dns, so ‘static’ is the only style allowed. macaddr is not burned into the hardware, just set it to some unique value. Change phyaddr if you change the address jumper in CoCoIO 
+<b>/DD/SYS/interfaces</b> - Interfaces describes the ethernet connection. We still don’t have dns, so ‘static’ is the only style allowed. macaddr is not burned into the hardware, just set it to some unique value. Change phyaddr if you change the address jumper in CoCoIO 
 
-iface eth0 inet static
-address 192.168.0.7
-gateway 192.168.0.1
-netmask 255.255.255.0
-macaddr 5C:26:0A:01:02:03
-phyaddr $FF6B
+	iface eth0 inet static
+	address 192.168.0.7
+	gateway 192.168.0.1
+	netmask 255.255.255.0
+	macaddr 5C:26:0A:01:02:03
+	phyaddr $FF6B
 
 
 
