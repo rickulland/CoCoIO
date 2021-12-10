@@ -29,7 +29,7 @@ CoCoIO always uses auto-increment mode to access the Wiznet internal RAM. Just  
 
 These control the local side network setup. Many can be left at default until you know they need changing. These are a must do setup for TCP/IP: 
 
-				   Start  Length
+			    Start   Length
 	Mode Register (MR)	$0  1
 	Gateway Address 	$1  4
 	Subnet Mask 		$5  4
@@ -102,7 +102,7 @@ Only two registers, and the TCP/IP connection is closed.
 
 
 
-<B>Web Browser</B>
+<h2>Example Program</h2>
 
 To illustrate all this, we have part of a web browser in Basic09. Get the code from https://github.com/rickulland/CoCoIO
 
