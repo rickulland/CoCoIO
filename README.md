@@ -84,19 +84,19 @@ With the socket opened, it’s time to move some bytes. Thw WizNet has 16K of in
 The W5100 does not automatically manage buffer rollover. It's up to you to wrap around, and to reset the read pointer location to reflect the number of 'auto-inc' reads made from the dataport. So a receive loop would be:
 
 	1. Use IRQ or poll the Received Size Register. When >0 ...
-	2. Get read or write pointer, AND with buffer mask <i>(buff size -1)</i> then add buffer base address. This is the start location.
-	3. Get rx/tx data size, subtract this from end of buffer. This is sizeof first segment. Read that many bytes from the dataport.
-	4. Reset the rx/tx pointer to the start of the buffer and read the remaining bytes from the dataport. 
+	2. Get read or write pointer, AND with buffer mask (buff size -1) 
+	   then add buffer base address. This is the start location.
+	3. Get rx/tx data size, subtract this from end of buffer. 
+	   This is sizeof first segment. Read that many bytes from the dataport.
+	4. Reset the rx/tx pointer to the start of the buffer 
+	   and read the remaining bytes from the dataport. 
 	5. Set the read pointer one address past the last read address
 	6. Send RECV ($40) to the socket command register
 
-
-
-
-
 <B>close the connection</B>
 
-Only two registers to manipulate, and the TCP/IP connection is closed. 
+Only two registers, and the TCP/IP connection is closed. 
+
 	Command Register ($401) – Set to $08 (DISCON)
 	Status Register ($403) – loop until = $18 (SOCK_FIN_WAIT)
 
@@ -111,13 +111,13 @@ To illustrate all this, we have part of a web browser in Basic09. Get the code f
 
 The ‘worst web wrangler’ depends on two data files loosely based on their Linux equivalents. Edit these and config is done.
 
-<b>/DD/SYS/hosts</b> - Hosts is the dns of last resort, a list of hostname and address pairs starting with the address of the local machine. We don’t have a dns utility yet, so follow that with additional lines of webservers & etc.  
+<b>/DD/SYS/hosts</b> - Hosts is the dns of last resort, a list of IP address and hostname pairs, starting with the address of the local machine. We don’t have a dns utility yet, so follow that with additional lines of webservers & etc.  
 
 	192.168.0.7  rickslaptop.org
 	192.168.0.8  anotherhost.com
 
 
-<b>/DD/SYS/interfaces</b> - Interfaces describes the ethernet connection. We still don’t have dns, so ‘static’ is the only style allowed. macaddr is not burned into the hardware, just set it to some unique value. Change phyaddr if you change the address jumper in CoCoIO 
+<b>/DD/SYS/interfaces</b> - Interfaces describes the ethernet connection. We still don’t have dns, so ‘static’ is the only style allowed. macaddr is not burned into the hardware, set the last 3 bytes to some unique hex values of your choosing. Change phyaddr if you change the address jumper in CoCoIO 
 
 	iface eth0 inet static
 	address 192.168.0.7
@@ -126,29 +126,33 @@ The ‘worst web wrangler’ depends on two data files loosely based on their Li
 	macaddr 5C:26:0A:01:02:03
 	phyaddr $FF6B
 
-
-
-Next, you will want to merge All The Things into gfx2, since we’ll need them. 
+If you haven't merge All The Things into the gfx2 module, consider it. 
 
 	cd /dd/cmds
 	rename gfx2 gfx2.org
 	merge gfx2.org inkey syscall > gfx2
+	
+It's also handy to ball up all of the Basic09 except the main program into a 'util(date)' file 
 
-Start in an 80 column graphics window, or use ‘makegw’ to convert the one you have. Then load the bits. For example:
+	merge GetMouse.b09 initeth.b09 stateth.b09 getdns.b09 getBookmark.b09 
+ 	putBookmark.b09 gotoHost.b09 owend.b09 propoff.b09 revoff.b09 > util1212.b09
+
+Those last three (owend,propoff,revoff) can be run if you crash out of basic while in an overlay. Because you will need to start in an 80 column graphics window. If you don't have one handy use ‘makegw’ to convert the window you're in. Then load the bits. For example:
 
 	makegw
 	basic09 #32k
-	load utilwww.b09
-	load www.b09
+	$dir  #(I never remember the file names)
+	load util1212.b09
+	load www1212.b09
 	run www
 
 
 
 <B>Using the program. </B>
 
-From a Basic prompt, “run www” and choose <m>ouse or <k>eyboard. Both can use the end of screen menu, the mouse can click underlined links on screen. (Popup menus are text only for now). 
+Once the program starts, choose mouse or keyboard based input for the main screen. Popup menus are text only for now. Both inputs can use the end of screen menu, but the mouse can also hit underlined links on screen. 
 
-That first popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything. Enter to close the bookmark menu.
+That first text popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything. Enter to close the bookmark menu.
 
 The first 20 or so lines of a web page are displayed, followed by an end of screen menu. <ENTER> for the next screen. There is no way to back up one screen yet, however <R>eload will start again from the top. 
 
