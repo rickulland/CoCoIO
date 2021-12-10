@@ -161,11 +161,8 @@ You can also Bookmark the current page or Goto a previously bookmarked page. Fin
 Here are a few workarounds for open bugs. This list should change often. 
 
 	nothing happens after a 1 letter command is given, press enter.
-
 	the page doesn’t appear but the menu comes back, try <R>eload
-
 	she’s dead, Jim. ESC then ‘run www’
-
 	crash to basic inside a menu, type ‘run owend’ then ‘run www’
 
 
@@ -174,13 +171,14 @@ Here are a few workarounds for open bugs. This list should change often.
 
 This part is coming RSN… 
 
-In most modules, setting debug:=TRUE provides additional output
-Search for the string “ DB “ for any additional debug help 
-Note ‘subtotal’ assignments are indented in the code
+	In most modules, setting debug:=TRUE provides additional output
+	Search for the string “ DB “ for any additional debug help 
+	Note ‘subtotal’ assignments are indented in the code
 
 Utility modules:
-get/putBookmark	- T&M menus for bookmarks and typed in URLs
-getdns		- has no dns, only looks at a /SYS/hosts file
-initeth,stateth	- initialize and debug the local connection
-getMouse,setMouse	- set up or read the mouse
-www			- main exe includes alpha features
+	
+	get/putBookmark	- T&M menus for bookmarks and typed in URLs
+	getdns		- has no dns, only looks at a /SYS/hosts file
+	initeth,stateth	- initialize and debug the local connection
+	getMouse,setMouse	- set up or read the mouse
+	www			- main exe includes alpha features
