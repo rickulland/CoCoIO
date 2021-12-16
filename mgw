@@ -1,0 +1,8 @@
+* switch text window to graphics
+display 1b 24
+* create new window in same path
+display 1b 20 5 0 0 50 18 1 0 4
+* pick a font (c8=group200, 01=1st buffer)
+display 1b 3a c8 01
+* select the new window
+display 1b 32 1
