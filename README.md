@@ -37,13 +37,13 @@ Those last three <i>(owend,propoff,revoff)</i> can be run if you crash out of ba
 
 
 
-You will need to start in an 80 column graphics window. If you don't have one handy use ‘makegw’ to convert the window you're in. Then load the bits. For example:
+You will need to start in an 80 column graphics window. If you don't have one handy use the ‘mgw’ shellscript to convert the window you're in. Then load the bits. For example:
 
-	makegw
+	mgw
 	basic09 #32k
-	$dir  #(I never remember the file names)
-	load util1212.b09
-	load www1212.b09
+	$dir        (* I never remember the file names)
+	load util????.b09
+	load grap???.b09
 	run www
 
 
