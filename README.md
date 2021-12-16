@@ -54,7 +54,7 @@ Once the program starts, choose mouse or keyboard based input for the main scree
 
 That first text popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything. Enter to close the bookmark menu.
 
-The first 20 or so lines of a web page are displayed, followed by an end of screen menu. <ENTER> for the next screen. There is no way to back up one screen yet, however <R>eload will start again from the top. 
+The first 20 or so lines of a web page are displayed, followed by an end of screen menu. ENTER for the next screen. There is no way to back up one screen yet, however <R>eload will start again from the top. 
 
 You can also Bookmark the current page or Goto a previously bookmarked page. Finally, the Links menu offers the last 10 links that have been encountered in a keyboard friendly menu. 
 
