@@ -11,7 +11,7 @@ Part of a web browser written in Basic09, poking at the bare metal of CoNect's '
 <b>/DD/SYS/hosts</b> - Hosts is the dns of last resort, a list of IP address and hostname pairs, starting with the address of the local machine. We don’t have a dns utility yet, so follow that with additional lines of webservers & etc.  
 
 	192.168.0.7  rickslaptop.org
-	192.168.0.8  anotherhost.com
+	104.192.7.102 play-classics.net
 
 
 <b>/DD/SYS/interfaces</b> - Interfaces describes the ethernet connection. We still don’t have dns, so ‘static’ is the only style allowed. macaddr is not burned into the hardware, set the last 3 bytes to some unique hex values of your choosing. Change phyaddr if you change the address jumper in CoCoIO 
