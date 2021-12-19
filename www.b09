@@ -50,9 +50,9 @@ PROCEDURE www
      RUN getBookmark(bookmark)
      (* FIXME make this a savable home page 
      IF bookmark.server="" THEN 
-       bookmark.server="rickLT.conect2020.org"
-       bookmark.page="/coco.html"
-       bookmark.title="coco test page"
+       bookmark.server="play-classics.net"
+       bookmark.page="/cocoio/index.html"
+       bookmark.title="CoCoIO home page"
      ENDIF 
 100  
      RUN gotoHost(bookmark)
