@@ -52,16 +52,16 @@ You will need to start in an 80 column graphics window. If you don't have one ha
 
 Once the program starts, choose mouse or keyboard based input for the main screen. Popup menus are text only for now. Both inputs can use the end of screen menu, but the mouse can also hit underlined links on screen. 
 
-That first text popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything. First run, that gets you our home page.  Enter to close the bookmark menu. Then <B>ookmark this most excellent homepage.
+That first text popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything. First run, that gets you our home page.  Enter to close the bookmark menu. Then B to bookmark this most excellent homepage.
 
-The first 20 or so lines of a web page are displayed, followed by an end of screen menu. ENTER for the next screen. There is no way to back up one screen yet, however <R>eload will start again from the top. 
+The first 20 or so lines of a web page are displayed, followed by an end of screen menu. ENTER for the next screen. There is no way to back up one screen yet, however R Reload will start again from the top. 
 
-You can also Bookmark the current page or Goto a previously bookmarked page. Finally, the Links menu offers the last 10 links that have been encountered in a keyboard friendly menu. 
+You can also G Goto a previously bookmarked page. Finally, the L Links menu offers the last 10 links that have been encountered in a keyboard friendly menu. 
 
 Here are a few workarounds for open bugs. This list should change often. 
 
 	nothing happens after a 1 letter command is given, press enter.
-	the page doesn’t appear but the menu comes back, try <R>eload
+	the page doesn’t appear but the menu comes back, try R Reload
 	she’s dead, Jim. ESC then ‘run www’
 	crash to basic inside a menu, type ‘run owend’ then ‘run www’
 
