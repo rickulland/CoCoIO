@@ -52,7 +52,7 @@ You will need to start in an 80 column graphics window. If you don't have one ha
 
 Once the program starts, choose mouse or keyboard based input for the main screen. Popup menus are text only for now. Both inputs can use the end of screen menu, but the mouse can also hit underlined links on screen. 
 
-That first text popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything. Enter to close the bookmark menu.
+That first text popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything. First run, that gets you our home page.  Enter to close the bookmark menu. Then <B>ookmark this most excellent homepage.
 
 The first 20 or so lines of a web page are displayed, followed by an end of screen menu. ENTER for the next screen. There is no way to back up one screen yet, however <R>eload will start again from the top. 
 
