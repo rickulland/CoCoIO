@@ -1,0 +1,107 @@
+PROCEDURE drawtable
+(* alpha 'just works' 01/10/22 copyback 1/10/22
+DIM debug:BOOLEAN
+DIM ccode,cols,linelen,maxcols,rows,int1,int2,fn1,fn2:INTEGER
+DIM colsz(8),maxsz(8),percent(8):INTEGER
+DIM mmath:REAL
+DIM celltx,instr,tabtx,cell(8,10):STRING
+PARAM scrnx,scrny,lines:INTEGER
+
+debug:=FALSE
+cols:=1 \rows:=1
+LOOP        \(* FIXME get table summary, style
+  ccode:=PEEK($FF6B) 
+  EXITIF ccode=62 THEN
+  ENDEXIT
+ENDLOOP
+(* record # rows, cols, and data as string array 
+tabtx:=""
+LOOP
+  LOOP
+    ccode:=PEEK($FF6B)
+  EXITIF ccode>31 AND ccode<128 THEN 
+  ENDEXIT 
+  ENDLOOP 
+  tabtx:=tabtx+CHR$(ccode)
+  IF debug=TRUE THEN
+    PRINT "DEBUG tabtx: "; tabtx
+  ENDIF
+5
+  IF RIGHT$(tabtx,1)=">" THEN
+    int1:=LEN(tabtx)
+    (* celltx = before "<", tabtx = after 
+    celltx:=LEFT$(tabtx,int1-(int1-SUBSTR("<",tabtx))-1)
+    tabtx:=RIGHT$(tabtx,int1-SUBSTR("<",tabtx)+1)
+    IF debug=TRUE THEN 
+      PRINT "DB tags: ";celltx;" ";tabtx
+      PAUSE 
+    ENDIF
+    IF LEFT$(tabtx,3)="<tr" THEN
+      tabtx:=""
+    ENDIF
+    IF LEFT$(tabtx,3)="<th" THEN
+      int1:=SUBSTR("width:",tabtx,)
+      IF int1>0 THEN
+        int1:=int1+6
+        int2:=SUBSTR("%",tabtx,)-int1
+        percent(cols):=VAL(MID$(tabtx,int1,int2))
+        tabtx:=""
+      ENDIF
+    ENDIF
+    IF RIGHT$(tabtx,4)="<td>" THEN 
+      tabtx:=""
+    ENDIF
+    IF RIGHT$(tabtx,5)="</td>" OR RIGHT$(tabtx,5)="</th>" THEN
+      cell(cols,rows):=celltx
+      int2:=LEN(cell(cols,rows))
+      IF int2>maxsz(cols) THEN \maxsz(cols):=int2 \ENDIF
+      tabtx:=""
+      IF cols<8 THEN \cols:=cols+1 \ENDIF
+      IF rows=1 THEN \maxcols:=cols-1 \ENDIF
+    ENDIF
+    IF RIGHT$(tabtx,5)="</tr>" THEN
+      tabtx:="" \ cols:=1
+      IF rows<10 THEN \rows:=rows+1 \ENDIF
+    ENDIF
+  ENDIF  
+EXITIF RIGHT$(tabtx,8)="</table>" THEN
+ENDEXIT
+ENDLOOP 
+
+(* we have the string array, it's size (cols, rows) 
+(* and linelen of longest line, user % width if avail
+
+100
+(* If there is % spec, set col widths to that
+int1:=scrnx-maxcols                  \(* reserve 1 space per column
+FOR fn1 = 1 TO maxcols
+  colsz(fn1):=percent(fn1)*int1/100
+NEXT fn1
+(* If there is no spec, wing it
+(* ADD ME 
+(*
+110
+  (* now print the table 
+  FOR fn1 = 1 TO rows
+    IF cury = scrny THEN    \(* Pause at end of screen
+      RUN gfx2("revon") \PRINT "Press a key to scroll";
+      RUN gfx2("revoff")
+      instr:=""
+      WHILE instr="" DO 
+        RUN INKEY(instr)
+      ENDWHILE 
+    ENDIF
+    FOR fn2 = 1 TO maxcols
+      IF fn2>1 THEN 
+        curx:=curx+colsz(fn2-1) 
+      ELSE
+        curx:=0
+      ENDIF
+
+      cury:=fn1+lines
+      PRINT TAB(curx); LEFT$(cell(fn2,fn1),colsz(fn2));
+    NEXT fn2
+    PRINT \curx:=0
+  NEXT fn1
+END
+ 
