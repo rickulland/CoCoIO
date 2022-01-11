@@ -1,5 +1,5 @@
 PROCEDURE www
-     (* Worst Web Wrangler 10/08/21 copyback 10/08/21
+     (* Worst Web Wrangler 1/10/21 copyback 1/10/21
      (* Socket 0 only using 2k size TX & RX buffer
      (* Requires 'wwwutils.b09' including:
      (* getdns, initeth, stateth, gotoHost
@@ -10,20 +10,20 @@ PROCEDURE www
      DIM regs:registers
      DIM mouse:rodent
      DIM bookmark:bookmarks
-     
      DIM debug,header,intag,inlink,intitle,inundl:BOOLEAN
      DIM getlink,hasmouse:BOOLEAN
-     DIM ccode,hostaddr(4):INTEGER
+     DIM ccode,scrnx,scrny,hostaddr(4):INTEGER
      DIM int1,int2,int3,int4,fn1,fn2,fn3,fn4:INTEGER
      DIM tryct,linkct,segment,segstart,xcur,ycur:INTEGER
      DIM linelen,lines,lxstart(10,2),lxend(10,2),lypos(10,2):INTEGER
      DIM raddr,rbase,rend,rmask,roff,rsize,rptr:INTEGER
      DIM instr:STRING[1]
-     DIM str:STRING[32]
-     DIM currhost,currpage:STRING[80]
-     DIM linktx,tagtx,titletx,linein,workstr,urlstr(10):STRING[80]
+     DIM str,tblcell(8,10):STRING
+     DIM currhost,currpage,descstrt(10),urlstr(10):STRING[80]
+     DIM desctx,linktx,tagtx,titletx,linein,workstr:STRING[80]
      (* _____ setup 
      debug:=FALSE
+     scrnx:=80
      lines:=0 \tryct:=1 \linkct:=0 \segstart:=0
      linktx:="" \titletx:=""
      FOR fn1=1 TO 10
@@ -42,7 +42,6 @@ PROCEDURE www
      ELSE 
        hasmouse:=FALSE
      ENDIF 
-     
      RUN gfx2("clear")
 10   
      RUN initeth \(* start WizNet 
@@ -62,28 +61,28 @@ PROCEDURE www
        PRINT "Waiting for data"; 
      ENDIF 
      LOOP 
-       (* FIXME _____ IRQ avoidance needs to stop!
+       (* FIXME _____ POLLs suggest IRQs are better!
        REPEAT 
            POKE $FF69,$04 \ POKE $FF6A,$26 \(* get Sn_RX_RSR recv size
          rsize:=PEEK($FF6B)*256+PEEK($FF6B)
          IF debug=TRUE THEN  \ PRINT ".";  \ ENDIF 
+         RUN INKEY(instr)
+         IF instr<>"" THEDN 1220
        UNTIL rsize<>0
-       segment:=rsize
-       
-       rbase:=$6000
-         POKE $FF69,$04 \ POKE $FF6A,$1E \(* Sn_RXBUF_SIZE
+       segment:=rsize \ rbase:=$6000
+         POKE $FF69,$04 \ POKE $FF6A,$1E \(* Sn_RXBUF_SIZE buff size
        int1:=PEEK($FF6B)*256+PEEK($FF6B)
        rmask:=1024*int1-1
        rmax:=int1*1024
-         POKE $FF69,$04 \ POKE $FF6A,$26 \(* Sn_RX_RSR
+         POKE $FF69,$04 \ POKE $FF6A,$26 \(* Sn_RX_RSR recv size
        rsize:=PEEK($FF6B)*256+PEEK($FF6B)
-         POKE $FF69,$04 \ POKE $FF6A,$28 \(* Sn_RX_RD
+         POKE $FF69,$04 \ POKE $FF6A,$28 \(* Sn_RX_RD ram pointer
        rptr:=PEEK($FF6B)*256+PEEK($FF6B)
-       int1:=INT(rptr/256) \int2:=rptr-256*int1
-       int3:=INT(rmask/256) \int4:=rmask-256*int3
-       int1:=LAND(int1,int3) \int2:=LAND(int2,int4)
+         int1:=INT(rptr/256) \int2:=rptr-256*int1
+         int3:=INT(rmask/256) \int4:=rmask-256*int3
+         int1:=LAND(int1,int3) \int2:=LAND(int2,int4)
        roff:=int1*256+int2+rbase
-       raddr:=rbase+roff
+       raddr:=rbase+roff \(* our read address at last
        (* _____________________________________________ parse the frame 
        IF roff+rsize>rend THEN 
          segment:=rmax-roff
@@ -91,10 +90,10 @@ PROCEDURE www
          IF debug=TRUE THEN  \ GOSUB 1500
          ELSE  \ GOSUB 1200
          ENDIF 
-         raddr:=rbase \segment:=rsize-rend
+         raddr:=rbase \ segment:=rsize-rend
          linelen:=LEN(linein) \(* keep unparsed end last read
          IF debug=TRUE THEN  \ GOSUB 1500
-         ELSE  \ GOSUB 1200
+         ELSE \ GOSUB 1200
          ENDIF 
        ELSE 
          segment:=rsize \(* copy all data
@@ -215,7 +214,7 @@ PROCEDURE www
              ENDIF 
              
              IF tagtx="<a " THEN 
-               getlink:=TRUE
+               getlink:=TRUE \ desctx:=""
                GOSUB 1310
                GOTO 1290
              ENDIF 
@@ -232,8 +231,7 @@ PROCEDURE www
        ELSE 
          linein:=linein+CHR$(ccode) \linelen:=linelen+1
        ENDIF 
-       (* FIXME should this be 80?, also see fn4 five lines down FIXME*)
-       IF linelen>=79 THEN 
+       IF linelen>=scrnx THEN 
          workstr:=linein  \(* FIXME just use linein
          FOR fn4=linelen TO 1 STEP -1
            str:=MID$(workstr,fn4,1)
@@ -286,13 +284,11 @@ PROCEDURE www
                (* _____ bookmark menu
                RUN getBookmark(bookmark)
                if bookmark.page:="" THEN 1220
-               (* TESTME **************************************
                GOSUB 300
                GOTO 100
              ELSE 
                IF instr="r" OR instr="R" THEN 
                  (* _____ reload page 32-40
-                 (* TESTME **************************************
                  GOSUB 300
                  GOTO 100
                ELSE 
@@ -362,17 +358,16 @@ PROCEDURE www
          FOR fn1=1 TO 10
            FOR fn2=1 TO 2
              IF xcur>=lxstart(fn1,fn2) AND xcur<=lxend(fn1,fn2) THEN
-               IF ycur=lypos(fn1,fn2) THEN 1230
+               IF ycur=lypos(fn1,fn2) THEN 
+                 bookmark.page:=urlstr(fn1)
+                 RUN gotoHost(bookmark)
+                 GOTO 200
+               ENDIF
              ENDIF 
            NEXT fn2
          NEXT fn1
        ENDIF 
        GOTO 1221
-       
-1230   (* see 2030
-       bookmark.page:=urlstr(fn1)
-       RUN gotoHost(bookmark)
-       GOTO 200
        
 1290   
        RUN gfx2("gcset",0,0)
@@ -438,8 +433,7 @@ PROCEDURE www
          PRINT  \RUN gfx2("font",200,2)
        ENDIF 
        IF RIGHT$(tagtx,2)="5>" THEN 
-         PRINT  \RUN gfx2("font",200,2) \RUN gfx2("boldsw","ON")
-          
+         PRINT  \RUN gfx2("font",200,2) \RUN gfx2("boldsw","ON")  
        ENDIF 
        IF RIGHT$(tagtx,2)="6>" THEN 
          PRINT  \RUN gfx2("font",200,2)
@@ -469,6 +463,11 @@ PROCEDURE www
        ENDIF 
      ENDIF 
      
+     IF LEFT$(tagtx,6)="<table" THEN 
+       PRINT "DEBUG tagtx=";tagtx
+       RUN drawTable(scrnx,scrny,lines)
+     ENDIF    
+     
      IF tagtx="</html>" OR tagtx="</HTML>" THEN 1220
      
      (* eat the tag, recognized or not
@@ -492,8 +491,9 @@ PROCEDURE www
      IF LEN(urlstr(10))>0 THEN 
        FOR fn3=1 TO 9
          urlstr(fn3):=urlstr(fn3+1)
+         descstr(fn3):=descstr(fn3+1)
        NEXT fn3
-       urlstr(10):=""
+       urlstr(10):="" \ descstr(10):=""
      ENDIF 
      
      FOR fn4=1 TO 10
@@ -505,21 +505,23 @@ PROCEDURE www
          LOOP 
            int1:=int1+1
            ccode=PEEK($FF6B)
+           desctx:=desctx+CHR$(ccode)
            linein:=linein+CHR$(ccode)
          EXITIF LEN(linein)>4 AND RIGHT$(linein,4)="</a>" THEN 
+           descstr(fn4):=MID$(desctx,2,LEN(desctx)-5)
          ENDEXIT 
          ENDLOOP 
          inlink:=FALSE \getlink:=FALSE \intag:=FALSE
          (* FIXME increase? (see 7,8 line below, & prev FIXME) ********
-         IF linelen<78 THEN 
+         IF linelen<scrnx-2 THEN 
            linein:=MID$(linein,2,LEN(linein)-5)
            linelen:=linelen+LEN(linein)
            GOSUB 1310
            RUN gfx2("undlnoff") \inundl:=FALSE
            lxend(fn4,1):=linelen
          ELSE 
-           lxend(fn4,1):=79
-           lxstart(fn4,2):=1 \lxend(fn4,2):=linelen-78
+           lxend(fn4,1):=scrnx-1
+           lxstart(fn4,2):=1 \lxend(fn4,2):=linelen-scrnx-2
            lypos(fn4,2):=lines+1
            linktx:=""
          ENDIF 
@@ -555,13 +557,11 @@ PROCEDURE www
        ENDIF 
      NEXT fn1
      
-2020 
      RUN gfx2("curxy",20,12)
      INPUT "Select Number, >10 to abort: ",doloc
      RUN gfx2("curoff")
      RUN gfx2("owend")
      IF doloc<11 THEN 
-2030   (* see 1230
        bookmark.page:="/"+urlstr(doloc)
        RUN gotoHost(bookmark)
        GOTO 200
