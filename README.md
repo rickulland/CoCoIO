@@ -31,10 +31,10 @@ If you haven't merged All The Things into the gfx2 module, consider it.
 	merge gfx2.org inkey syscall > gfx2
 	
 It's also handy to ball up all of the Basic09 routines except the main routine 'www' into a 'util(date)' file.  
-Those last three utils <i>(owend,propoff,revoff)</i> can be run if you crash out of basic while in an overlay. 
+Those last three utils <i>(owend,propoff,revoff,undoff)</i> can be run if you crash out of basic while in an overlay. 
 
-	merge GetMouse.b09 initeth.b09 stateth.b09 getdns.b09 getBookmark.b09 
- 	putBookmark.b09 gotoHost.b09 owend.b09 propoff.b09 revoff.b09 > util1212.b09
+	merge  drawTable.b09 getdns.b09 getBookmark.b09 GetMouse.b09  gotoHost.b09 initeth.b09 
+ 	putBookmark.b09 stateth.b09 owend.b09 propoff.b09 revoff.b09 undoff.b09 > wwwutil.b09
 
 
 
@@ -78,9 +78,9 @@ This part is coming RSN…
 
 Utility modules:
 	
-	drawTable	- create string array and display popup columns
-	get/putBookmark	- T&M menus for bookmarks and typed in URLs
-	getdns		- has no dns, only looks at a /SYS/hosts file
-	initeth,stateth	- initialize and debug the local connection
+	drawTable		- create string array and display popup columns
+	get/putBookmark		- T&M menus for bookmarks and typed in URLs
+	getdns			- has no dns, only looks at a /SYS/hosts file
+	initeth,stateth		- initialize and debug the local connection
 	getMouse,setMouse	- set up or read the mouse
 	www			- main exe includes alpha features
