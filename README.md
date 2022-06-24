@@ -1,8 +1,7 @@
 
 <h1> The worst web wrangler </h1>
 
-Part of a web browser written in Basic09, poking at the bare metal of CoNect's 'CoCoIO' card. You'll need one of those, working OS9, and an available network connection;-).
-
+Part of a web browser written in Basic09, poking at the bare metal of CoNect's 'CoCoIO' card. You'll need one of those, working OS9, and an available network connection;-). Nowadays, you'd like a hires mouse also. 
 
 <B>Setup</B>
 
@@ -24,38 +23,20 @@ Part of a web browser written in Basic09, poking at the bare metal of CoNect's '
 	macaddr 5C:26:0A:01:02:03
 	phyaddr $FF6B
 
-If you haven't merged All The Things into the gfx2 module, consider it. 
 
-	cd /dd/cmds
-	rename gfx2 gfx2.org
-	merge gfx2.org inkey syscall > gfx2
-	
-It's also handy to ball up all of the Basic09 routines except the main routine 'www' into a 'util(date)' file.  
-Those last three utils <i>(owend,propoff,revoff,undoff)</i> can be run if you crash out of basic while in an overlay. 
+The Basic09 utilities <i>(all b09 except the main routine 'www')</i> don't change very often, ball them into one file.  I will put the wad someplace. 
 
-	merge  drawTable.b09 getdns.b09 getBookmark.b09 GetMouse.b09  gotoHost.b09 initeth.b09 
+The optional utils <i>(owend,propoff,revoff,undoff)</i> can be run if you crash out of basic while in an overlay.
+	merge  drawTable.b09 getdns.b09 getBookmark.b09  gotoHost.b09 initeth.b09 
  	putBookmark.b09 stateth.b09 owend.b09 propoff.b09 revoff.b09 undoff.b09 > wwwutil.b09
-
-
-
-You will need to start in an 80 column graphics window. If you don't have one handy use the ‘mgw’ shellscript to convert the window you're in. Then load the bits. For example:
-
-	mgw
-	basic09 #32k
-	$dir        (* I never remember the file names)
-	load util????.b09
-	load grap???.b09
-	run www
-
-
 
 <B>Using the program. </B>
 
-Once the program starts, choose mouse or keyboard based input for the main screen. Both inputs can use the end of screen menu, the mouse is supposed to hit underlined links on screen, but my mouse is indisposed so dunno. Popup menus are text only for now. 
+Once the program starts, choose mouse or keyboard based input for the main screen. 'Keys' uses an end of screen menu, mouse has dropdowns or hotkeys <i>(ALT-letter)</i>. Underlined links on screen work, to avoid scrolling the <L>inks menu has the last 10 links. Popups are still text only. Coming soon. 
 
-That first text popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything and get our home page.  Enter to close the bookmark menu. Then B to bookmark this most excellent homepage.
+Anyway, that first text popup will be the bookmark list. Select by number, key in a URL, or input 99 to not select anything and get our home page.  Enter to close the bookmark menu. If you typed in a page, use B to bookmark it now...
 
-The first 20 or so lines of a web page are displayed, followed by an end of screen menu. ENTER for the next screen. There is no way to back up one screen yet, however R Reload will start again from the top. 
+The first 22 or so lines of a web page are displayed, with mouse or end of screen menu. ENTER for the next screen. There is no way to back up one screen yet, however R Reload will start again from the top. 
 
 You can also G Goto a previously bookmarked page. Finally, the L Links menu offers the last 10 links that have been encountered in a keyboard friendly menu. 
 
@@ -79,8 +60,7 @@ This part is coming RSN…
 Utility modules:
 	
 	drawTable		- create string array and display popup columns
-	get/putBookmark		- T&M menus for bookmarks and typed in URLs
-	getdns			- has no dns, only looks at a /SYS/hosts file
+	get/putBookmark		- overlay menus for bookmarks and typed in URLs
+	getdns			- has no dns skills, only looks at a /dd/SYS/hosts file
 	initeth,stateth		- initialize and debug the local connection
-	getMouse,setMouse	- set up or read the mouse
-	www			- main exe includes alpha features
+	www			- main exe 
