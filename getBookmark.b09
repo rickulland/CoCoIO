@@ -1,68 +1,65 @@
 PROCEDURE getBookmark
-(* 8/12/21
-TYPE bookmarks=server,page,title:STRING[80]
+(* 06/23/22
+TYPE bookmarks=server,page,title:STRING[144]
 DIM path:BYTE
 DIM int1,fn1,fn2,doloc,readloc,reclen:INTEGER
-DIM instr:STRING[80]
+DIM instr:STRING[144]
 PARAM bookmark:bookmarks
 reclen:=240
 
 ON ERROR GOTO 1000
 RUN gfx2("owset",1,5,5,70,12,2,4)
 RUN gfx2("curon") \RUN gfx2("gcset",0,0)
-RUN gfx2("curxy",30,0) \PRINT "Bookmarks:"
+RUN gfx2("curxy",30,0) \ PRINT "Bookmarks:"
 
 10 OPEN #path,"/dd/SYS/bookmark.www":READ
-LOOP
-  FOR fn1=0 TO 4
-    FOR fn2=1 TO 10
-      readloc:=fn1*10+fn2-1
-      SEEK #path,readloc*reclen
-      GET #path,bookmark
-      PRINT readloc+1; " "; bookmark.title
-    NEXT fn2
+LOOP 
+    FOR fn1=0 TO 4
+        FOR fn2=1 TO 10
+            readloc:=fn1*10+fn2-1
+            SEEK #path,readloc*reclen
+            GET #path,bookmark
+            PRINT readloc+1; " "; bookmark.title; " -- "; bookmark.server
+        NEXT fn2
 
-20  
-    run gfx2("revon")
-    INPUT "Key in URL or enter: number, ENTER=page, 99=exit: ",instr
-    run gfx2("revoff")
-    IF LEN(instr)<3 THEN
-      IF instr="" THEN 25
-      doloc:=VAL(instr)
-      IF doloc>50 THEN 
+        20 RUN gfx2("revon")
+        INPUT "Key in URL or enter: number, ENTER=page, 99=exit: ",instr
+        RUN gfx2("revoff")
+        IF LEN(instr)<3 THEN 
+            IF instr="" THEN 25
+            doloc:=VAL(instr)
+            IF doloc>50 THEN 
+                bookmark.server:=""
+                bookmark.page:=""
+                bookmark.title:=""
+                GOTO 30
+            ELSE 
+                SEEK #path,(doloc-1)*reclen
+                GET #path,bookmark
+                GOTO 30
+            ENDIF 
+        ELSE 
+            int1:=SUBSTR("/",instr)
+            IF int1<>0 THEN 
+                bookmark.server:=LEFT$(instr,int1-1)
+            ENDIF 
+            int1:=LEN(instr)-int1+1
+            bookmark.page:=RIGHT$(instr,int1)
+            GOTO 30
+        ENDIF 
         bookmark.server:=""
-        bookmark.page:=""
+        bookmark.page:=instr
         bookmark.title:=""
         GOTO 30
-      ELSE
-        SEEK #path,(doloc-1)*reclen
-        GET #path,bookmark
-        GOTO 30
-      ENDIF
-    ELSE
-      int1:=substr("/",instr)
-      IF int1<>0 THEN  
-        bookmark.server:=LEFT$(instr,int1-1)
-      ENDIF
-      int1:=LEN(instr)-int1
-      bookmark.page:=RIGHT$(instr,int1)
-      GOTO 30
-    ENDIF
-    bookmark.server:=""
-    bookmark.page:=instr
-    bookmark.title:=""
-    GOTO 30
-25
-  RUN gfc2("clear")
-  RUN gfx2("curxy",30,0) \PRINT "Bookmarks:"
-  NEXT fn1
-ENDLOOP
+        25 RUN gfx2("clear")
+        RUN gfx2("curxy",30,0) \ PRINT "Bookmarks:"
+    NEXT fn1
+ENDLOOP 
 
 30 CLOSE #path
 RUN gfx2("curoff")
 RUN gfx2("owend")
 END 
-
 
 1000 ON ERROR 
 CREATE #path,"/dd/SYS/bookmark.www":WRITE
@@ -70,7 +67,7 @@ bookmark.server=""
 bookmark.page=""
 bookmark.title=""
 FOR fn1=1 TO 50
-  PUT #path,bookmark
+    PUT #path,bookmark
 NEXT fn1
 CLOSE #path
 GOTO 10
