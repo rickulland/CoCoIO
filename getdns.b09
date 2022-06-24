@@ -1,25 +1,25 @@
 PROCEDURE getdns
 (* www util - get host address 10/08/21 
 (* reads file  /SYS/hosts, formatted as:
-(*
-(* 192.168.1.7  rickslaptop.org
+(* 
+(* 192.168.0.7  rickslaptop.org
 (* 192.168.0.7  anotherhost.com
 
 DIM cnt,path:INTEGER
-DIM instr:STRING[80]
-PARAM hostname:STRING[80]
+DIM instr:STRING[144]
+PARAM hostname:STRING[144]
 PARAM hostaddr(4):INTEGER
 
 OPEN #path,"/DD/SYS/hosts":READ
-WHILE EOF(#path)<>TRUE DO
-  READ #path,instr
-  IF SUBSTR(hostname,instr) <> 0 THEN
-    FOR cnt=1 TO 4
-      loc:=SUBSTR(".",instr)  
-      hostaddr(cnt):=VAL(MID$(instr,1,loc-1))
-      instr:=RIGHT$(instr,LEN(instr)-loc)
-    NEXT cnt
-  ENDIF 
-ENDWHILE
+WHILE EOF(#path)<>TRUE DO 
+    READ #path,instr
+    IF SUBSTR(hostname,instr)<>0 THEN 
+        FOR cnt=1 TO 4
+            loc:=SUBSTR(".",instr)
+            hostaddr(cnt):=VAL(MID$(instr,1,loc-1))
+            instr:=RIGHT$(instr,LEN(instr)-loc)
+        NEXT cnt
+    ENDIF 
+ENDWHILE 
 CLOSE #path
-END
+END 

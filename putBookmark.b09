@@ -1,51 +1,50 @@
 PROCEDURE putBookmark
-     (* 8/9/21
-     TYPE bookmarks=name,page,title:STRING[80]
-     DIM path:BYTE
-     DIM int1,reclen:INTEGER
-     DIM instr:STRING[1]
-     DIM testit:bookmarks     
-     PARAM bookmark:bookmarks
-     reclen:=240
+(* 06/23/22
+TYPE bookmarks=server,page,title:STRING[144]
+DIM path:BYTE
+DIM int1,reclen:INTEGER
+DIM instr:STRING[1]
+DIM testit:bookmarks
+PARAM bookmark:bookmarks
+reclen:=240
 
-     RUN gfx2("owset",1,5,5,70,6,2,4)
-     RUN gfx2("curon") \RUN gfx2("gcset",0,0)
-     PRINT
+RUN gfx2("owset",1,5,5,70,6,2,4)
+RUN gfx2("curon") \RUN gfx2("gcset",0,0)
+PRINT 
 
-     ON ERROR GOTO 1000
-10   OPEN #path,"/dd/SYS/bookmark.www":UPDATE
-     FOR int1 = 1 TO 50
-         SEEK #path,(int1-1)*reclen
-         GET #path,testit
-         IF testit.name="" THEN
-           SEEK #path,(int1-1)*reclen
-           PUT #path,bookmark
-           PRINT "Bookmark saved:"
-           PRINT bookmark.title       
-           PRINT bookmark.name
-           PRINT bookmark.page
-           GOTO 30
-         ENDIF
-     NEXT int1
-     PRINT "Not saved. Bookmark file full."; 
+ON ERROR GOTO 1000
+10 OPEN #path,"/dd/SYS/bookmark.www":UPDATE
+FOR int1=1 TO 50
+    SEEK #path,(int1-1)*reclen
+    GET #path,testit
+    IF testit.server="" THEN 
+        SEEK #path,(int1-1)*reclen
+        PUT #path,bookmark
+        PRINT "  "; bookmark.title
+        PRINT "  "; bookmark.server; bookmark.page
+        PRINT " Bookmark saved."; 
+        GOTO 30
+    ENDIF 
+NEXT int1
+PRINT "Not saved. Bookmark file full."; 
 
-30   RUN gfx2("curxy",1,6) \PRINT "Enter to leave" 
-     instr:=""
-     WHILE instr="" DO
-       RUN INKEY(instr)
-     ENDWHILE
-     CLOSE #path
-     RUN gfx2("curoff")
-     RUN gfx2("owend")
-     END
+30 RUN gfx2("curxy",1,6) \ PRINT "Enter to leave"
+instr:=""
+WHILE instr="" DO 
+    RUN BNKEY(instr)
+ENDWHILE 
+CLOSE #path
+RUN gfx2("curoff")
+RUN gfx2("owend")
+END 
 
-1000 ON ERROR
-     CREATE #path,"/dd/SYS/bookmark.www":WRITE
-     bookmark.name=""
-     bookmark.page=""
-     bookmark.title=""
-     FOR int1 = 1 TO 50
-       PUT #path,bookmark
-     NEXT int1
-     CLOSE #path
-     GOTO 10
+1000 ON ERROR 
+CREATE #path,"/dd/SYS/bookmark.www":WRITE
+bookmark.server=""
+bookmark.page=""
+bookmark.title=""
+FOR int1=1 TO 50
+PUT #path,bookmark
+NEXT int1
+CLOSE #path
+GOTO 10

@@ -1,7 +1,7 @@
 PROCEDURE gotoHost
-(* 10/08/21
-TYPE bookmarks=server,page,title:STRING[80]
-DIM hostname,lineout(4):STRING[80]
+(* 06/23/22
+TYPE bookmarks=server,page,title:STRING[144]
+DIM hostname,lineout(4):STRING[144]
 DIM crlf:STRING[2]
 DIM hostaddr(4):INTEGER
 DIM int1,fn1,fn2,waddr,wbase,wend,wmask,wsize,wptr:INTEGER
@@ -16,35 +16,35 @@ crlf=CHR$(13)+CHR$(10)
 hostname:=bookmark.server
 RUN getdns(hostname,hostaddr)
 IF debug=TRUE THEN 
-  PRINT "DB hostname "; hostname; "addr "; 
+    PRINT "DB hostname "; hostname; "addr "; 
 ENDIF 
 POKE $FF69,$04 \ POKE $FF6A,$0C
 FOR fn1=1 TO 4
-  IF debug=TRUE THEN PRINT hostaddr(fn1); ".";  \ ENDIF 
-  POKE $FF6B,hostaddr(fn1)
+    IF debug=TRUE THEN PRINT hostaddr(fn1); ".";  \ ENDIF 
+    POKE $FF6B,hostaddr(fn1)
 NEXT fn1
 POKE $FF6B,0 \ POKE $FF6B,80
 (* random local port * DB 8/26/21
 POKE $FF69,$04 \ POKE $FF6A,$04
 POKE $FF6B,$80 \ POKE $FF6B,RND($FF)
-  
+
 (* _____open socket, fn until status OK or fatal error
 POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$01
 POKE $FF69,$04 \ POKE $FF6A,$03 \int1:=PEEK($FF6B)
-IF int1<>$13 THEN   \(* socket not open tcp mode
-  PRINT "FATAL: local socket didn't initialize. BREAK to exit"
-  INPUT int1
-  GOTO 5000
-ENDIF 
-REPEAT 
-  POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$04
-  POKE $FF69,$04 \ POKE $FF6A,$03 \int1:=PEEK($FF6B)
-  IF int1=0 THEN    \(* socket was closed
-    PRINT "ERROR: remote server closed connection. Reload page."
+IF int1<>$13 THEN  \(* socket not open tcp mode
+    PRINT "FATAL: local socket didn't initialize. BREAK to exit"
     INPUT int1
     GOTO 5000
-  ENDIF
-UNTIL int1=$17         \(* connected
+ENDIF 
+REPEAT 
+    POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$04
+    POKE $FF69,$04 \ POKE $FF6A,$03 \int1:=PEEK($FF6B)
+    IF int1=0 THEN  \(* socket was closed
+        PRINT "ERROR: remote server closed connection. Reload page."
+        INPUT int1
+        GOTO 5000
+    ENDIF 
+UNTIL int1=$17 \(* connected
 IF debug=TRUE THEN PRINT  \ PRINT "Socket open" \ ENDIF 
 lineout(1):="GET "+bookmark.page+" HTTP/1.1"
 lineout(2):="Host: "+bookmark.server
@@ -57,8 +57,8 @@ wsize:=LEN(lineout(1))+LEN(lineout(2))+LEN(lineout(3))+8
 (* FIXME using this loop as IRQ dodge  FIXME
 
 REPEAT 
-  POKE $FF69,$04 \ POKE $FF6A,$20
-  int1:=PEEK($FF6B)*256+PEEK($FF6B)
+    POKE $FF69,$04 \ POKE $FF6A,$20
+    int1:=PEEK($FF6B)*256+PEEK($FF6B)
 UNTIL int1>wsize
 POKE $FF69,$04 \ POKE $FF6A,$22
 wptr:=PEEK($FF6B)*256+PEEK($FF6B)
@@ -73,13 +73,14 @@ segment:=wsize
 int1:=INT(waddr/256) \int2:=waddr-256*int1
 POKE $FF69,int1 \ POKE $FF6A,int2
 FOR fn1=1 TO 4
-  FOR fn2=1 TO LEN(lineout(fn1))
-    int1:=ASC(MID$(lineout(fn1),fn2,1))
-    POKE $FF6B,int1
-    IF debug=TRUE THEN  \ PRINT CHR$(int1);  \ ENDIF 
-  NEXT fn2
-  POKE $FF6B,$0D \ POKE $FF6B,$0A
-  IF debug=TRUE THEN  \ PRINT  \ ENDIF 
+    FOR fn2=1 TO LEN(lineout(fn1))
+        int1:=ASC(MID$(lineout(fn1),fn2,1))
+        POKE $FF6B,int1
+        IF debug=TRUE THEN  \ PRINT CHR$(int1);  \ ENDIF 
+    NEXT fn2
+    POKE $FF6B,$0D \ POKE $FF6B,$0A
+    IF debug=TRUE THEN  \ PRINT  \ ENDIF 
 NEXT fn1
 POKE $FF69,$04 \ POKE $FF6A,$01 \ POKE $FF6B,$20
 5000 END 
+

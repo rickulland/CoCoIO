@@ -2,22 +2,22 @@ PROCEDURE stateth
 (* dump Wiznet config regs v 1.0 7/01/21
 
 DIM int1:INTEGER
-POKE $FF68,$03 \POKE $FF69,$00 \POKE $FF6A,$01
-PRINT " Gateway "; \GOSUB 1000
-PRINT "  Subnet "; \GOSUB 1000
-PRINT "     MAC "; \GOSUB 1200
-PRINT "   My IP "; \GOSUB 1000
+POKE $FF68,$03 \ POKE $FF69,$00 \ POKE $FF6A,$01
+PRINT " Gateway ";  \ GOSUB 1000
+PRINT "  Subnet ";  \ GOSUB 1000
+PRINT "     MAC ";  \ GOSUB 1200
+PRINT "   My IP ";  \ GOSUB 1000
 GOTO 5000
-1000 FOR int1 = 1 TO 4
-       PRINT PEEK($FF6B);".";
-     NEXT int1
-     PRINT
-     RETURN
-1200 FOR int1 = 1 TO 6
-       PRINT USING "H2",PEEK($FF6B);
-       PRINT ":";
-     NEXT int1
-     PRINT
-     RETURN
-5000
-END
+1000 FOR int1=1 TO 4
+PRINT PEEK($FF6B); "."; 
+NEXT int1
+PRINT 
+RETURN 
+1200 FOR int1=1 TO 6
+PRINT USING "H2",PEEK($FF6B); 
+PRINT ":"; 
+NEXT int1
+PRINT 
+RETURN 
+5000 
+END 
